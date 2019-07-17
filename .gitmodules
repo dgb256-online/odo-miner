@@ -1,0 +1,3 @@
+[submodule "odo-epochs"]
+	path = odo-epochs
+	url = https://github.com/dgb256-online/odo-epochs
