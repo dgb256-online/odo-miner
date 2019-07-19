@@ -3,6 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ARG ODOUSER=odo
 ARG HOMEDIR=/home/$ODOUSER
+ARG ODOMINER=$HOMEDIR/odo-miner
 
 RUN apt-get update && \
     apt-get -y install apt-utils
@@ -19,23 +20,24 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 RUN useradd -ms /bin/bash $ODOUSER
-USER $ODOUSER
-WORKDIR $HOMEDIR
+
+RUN mkdir $ODOMINER
+WORKDIR $ODOMINER
+ADD src $ODOMINER/src
+
+ARG CYCLONEV_OF=$ODOMINER/src/projects/cyclone_v_gx_starter_kit/output_files/
+ARG DE10_OF=$ODOMINER/src/projects/de10_nano/output_files/
+
+RUN mkdir -p $CYCLONEV_OF && mkdir -p $DE10_OF
+
+COPY odo-epochs/cyclone_v_gx_starter_kit/testnet/*.sof $CYCLONEV_OF
+COPY odo-epochs/cyclone_v_gx_starter_kit/mainnet/*.sof $CYCLONEV_OF
+COPY odo-epochs/de10_nano/testnet/*.sof $DE10_OF
+COPY odo-epochs/de10_nano/mainnet/*.sof $DE10_OF
 
 ADD init.sh /init.sh
+RUN chown -R $ODOUSER:$ODOUSER $ODOMINER
 
-RUN git clone https://github.com/dgb256-online/odo-miner.git && \
-    cd odo-miner && \
-    git checkout docker && \
-    git submodule init && \
-    git submodule update
-
-RUN cd odo-miner && \
-    mkdir -p src/projects/de10_nano/output_files/ && \
-    mkdir -p src/projects/cyclone_v_gx_starter_kit/output_files/ && \
-    mv odo-epochs/de10_nano/testnet/*.sof src/projects/de10_nano/output_files/ && \
-    mv odo-epochs/de10_nano/mainnet/*.sof src/projects/de10_nano/output_files/ && \
-    mv odo-epochs/cyclone_v_gx_starter_kit/testnet/*.sof src/projects/cyclone_v_gx_starter_kit/output_files/ && \
-    mv odo-epochs/cyclone_v_gx_starter_kit/mainnet/*.sof src/projects/cyclone_v_gx_starter_kit/output_files/
+USER $ODOUSER
 
 CMD ["/init.sh"]
